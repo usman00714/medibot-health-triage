@@ -14,13 +14,74 @@ export type Database = {
   }
   public: {
     Tables: {
-      [_ in never]: never
+      assessments: {
+        Row: {
+          ai_response: string | null
+          assessment_code: string
+          category: string
+          created_at: string
+          id: string
+          risk_level: string | null
+          symptoms: string
+          user_id: string
+        }
+        Insert: {
+          ai_response?: string | null
+          assessment_code: string
+          category: string
+          created_at?: string
+          id?: string
+          risk_level?: string | null
+          symptoms: string
+          user_id: string
+        }
+        Update: {
+          ai_response?: string | null
+          assessment_code?: string
+          category?: string
+          created_at?: string
+          id?: string
+          risk_level?: string | null
+          symptoms?: string
+          user_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "assessments_user_id_fkey"
+            columns: ["user_id"]
+            isOneToOne: false
+            referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      profiles: {
+        Row: {
+          created_at: string
+          email: string | null
+          id: string
+          role: string
+        }
+        Insert: {
+          created_at?: string
+          email?: string | null
+          id: string
+          role?: string
+        }
+        Update: {
+          created_at?: string
+          email?: string | null
+          id?: string
+          role?: string
+        }
+        Relationships: []
+      }
     }
     Views: {
       [_ in never]: never
     }
     Functions: {
-      [_ in never]: never
+      get_my_role: { Args: never; Returns: string }
     }
     Enums: {
       [_ in never]: never
