@@ -9,6 +9,7 @@ import {
 import type { ReactNode } from "react";
 import appCss from "../styles.css?url";
 import { Footer } from "@/components/Footer";
+import { Toaster } from "@/components/ui/sonner";
 
 function NotFoundComponent() {
   return (
@@ -78,6 +79,7 @@ function RootComponent() {
         <Outlet />
         <Footer />
       </div>
+      <Toaster />
     </QueryClientProvider>
   );
 }
