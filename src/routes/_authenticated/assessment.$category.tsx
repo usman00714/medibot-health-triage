@@ -160,9 +160,32 @@ function AssessmentPage() {
   );
 }
 
-function ResultView({ result, onReset }: { result: Result; onReset: () => void }) {
+function ResultView({
+  result,
+  onReset,
+  onRefine,
+  refining,
+}: {
+  result: Result;
+  onReset: () => void;
+  onRefine: (followups: { question: string; answer: string }[]) => void;
+  refining: boolean;
+}) {
   const a = result.assessment;
   const urgent = a.care_suggestions.length === 0;
+  const questions = a.follow_up_questions ?? [];
+  const [answers, setAnswers] = useState<string[]>(() => questions.map(() => ""));
+
+  const submitFollowups = () => {
+    const followups = questions
+      .map((q, i) => ({ question: q, answer: answers[i]?.trim() ?? "" }))
+      .filter((f) => f.answer.length > 0);
+    if (followups.length === 0) {
+      toast.error("Answer at least one follow-up question first.");
+      return;
+    }
+    onRefine(followups);
+  };
 
   return (
     <div className="mt-6 space-y-4">
@@ -186,12 +209,35 @@ function ResultView({ result, onReset }: { result: Result; onReset: () => void }
           </>
         )}
 
-        {a.follow_up_questions?.length > 0 && (
+        {questions.length > 0 && (
           <>
             <h3 className="mt-6 font-semibold">Follow-up questions</h3>
-            <ul className="mt-2 list-disc pl-5 text-sm space-y-1">
-              {a.follow_up_questions.map((q, i) => <li key={i}>{q}</li>)}
-            </ul>
+            <p className="mt-1 text-xs text-muted-foreground">
+              Answer what you can to refine the assessment.
+            </p>
+            <div className="mt-3 space-y-3">
+              {questions.map((q, i) => (
+                <div key={i} className="space-y-1.5">
+                  <label className="block text-sm">{q}</label>
+                  <Input
+                    value={answers[i] ?? ""}
+                    onChange={(e) =>
+                      setAnswers((prev) => {
+                        const next = [...prev];
+                        next[i] = e.target.value;
+                        return next;
+                      })
+                    }
+                    disabled={refining}
+                    placeholder="Your answer…"
+                  />
+                </div>
+              ))}
+            </div>
+            <Button onClick={submitFollowups} disabled={refining} className="mt-4">
+              <RefreshCw className="size-4" />
+              {refining ? "Updating…" : "Update assessment"}
+            </Button>
           </>
         )}
       </div>
