@@ -31,7 +31,7 @@ Deno.serve(async (req) => {
       });
     }
 
-    const { category, symptoms } = await req.json();
+    const { category, symptoms, followups } = await req.json();
     if (!category || !symptoms) {
       return new Response(JSON.stringify({ error: "category and symptoms are required" }), {
         status: 400,
@@ -39,7 +39,16 @@ Deno.serve(async (req) => {
       });
     }
 
-    const userPrompt = `Patient category: ${category}\nSymptoms: ${symptoms}`;
+    let userPrompt = `Patient category: ${category}\nSymptoms: ${symptoms}`;
+    if (Array.isArray(followups) && followups.length > 0) {
+      const qa = followups
+        .filter((f: { question?: string; answer?: string }) => f && f.question && f.answer)
+        .map((f: { question: string; answer: string }, i: number) => `${i + 1}. Q: ${f.question}\n   A: ${f.answer}`)
+        .join("\n");
+      if (qa) {
+        userPrompt += `\n\nAdditional context from follow-up answers:\n${qa}\n\nRefine your previous assessment using this new information. Respond with the same strict JSON schema.`;
+      }
+    }
 
     const callModel = (model: string) =>
       fetch(
