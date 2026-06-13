@@ -146,7 +146,15 @@ function AssessmentPage() {
           )}
         </div>
 
-        {result && <ResultView result={result} onReset={reset} />}
+        {result && (
+          <ResultView
+            key={result.code}
+            result={result}
+            onReset={reset}
+            onRefine={handleRefine}
+            refining={submitting}
+          />
+        )}
       </div>
     </main>
   );
