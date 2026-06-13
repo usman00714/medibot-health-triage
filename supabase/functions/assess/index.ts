@@ -41,18 +41,39 @@ Deno.serve(async (req) => {
 
     const userPrompt = `Patient category: ${category}\nSymptoms: ${symptoms}`;
 
-    const geminiRes = await fetch(
-      `https://generativelanguage.googleapis.com/v1beta/models/gemini-2.5-flash:generateContent?key=${apiKey}`,
-      {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({
-          systemInstruction: { parts: [{ text: SYSTEM_INSTRUCTION }] },
-          contents: [{ role: "user", parts: [{ text: userPrompt }] }],
-          generationConfig: { temperature: 0.4, responseMimeType: "application/json" },
-        }),
-      },
-    );
+    const callModel = (model: string) =>
+      fetch(
+        `https://generativelanguage.googleapis.com/v1beta/models/${model}:generateContent?key=${apiKey}`,
+        {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({
+            systemInstruction: { parts: [{ text: SYSTEM_INSTRUCTION }] },
+            contents: [{ role: "user", parts: [{ text: userPrompt }] }],
+            generationConfig: { temperature: 0.4, responseMimeType: "application/json" },
+          }),
+        },
+      );
+
+    const models = ["gemini-2.5-flash", "gemini-2.5-flash", "gemini-2.5-flash-lite"];
+    let geminiRes: Response | null = null;
+    let lastErr = "";
+    for (let i = 0; i < models.length; i++) {
+      if (i > 0) await new Promise((r) => setTimeout(r, 600 * i));
+      geminiRes = await callModel(models[i]);
+      if (geminiRes.ok) break;
+      lastErr = await geminiRes.text();
+      console.warn(`Gemini ${models[i]} failed (${geminiRes.status}):`, lastErr);
+      if (geminiRes.status !== 503 && geminiRes.status !== 429) break;
+    }
+
+    if (!geminiRes || !geminiRes.ok) {
+      return new Response(JSON.stringify({ error: "Gemini request failed", detail: lastErr }), {
+        status: 502,
+        headers: { ...corsHeaders, "Content-Type": "application/json" },
+      });
+    }
+
 
     if (!geminiRes.ok) {
       const errText = await geminiRes.text();
