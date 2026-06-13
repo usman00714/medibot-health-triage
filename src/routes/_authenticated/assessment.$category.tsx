@@ -1,8 +1,9 @@
 import { createFileRoute, Link, notFound } from "@tanstack/react-router";
 import { useState } from "react";
-import { Send, ArrowLeft, Sparkles, AlertTriangle, HeartPulse } from "lucide-react";
+import { Send, ArrowLeft, Sparkles, AlertTriangle, HeartPulse, RefreshCw } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Textarea } from "@/components/ui/textarea";
+import { Input } from "@/components/ui/input";
 import { RiskBadge } from "@/components/RiskBadge";
 import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
