@@ -50,6 +50,37 @@ function AssessmentPage() {
   const [submitting, setSubmitting] = useState(false);
   const [result, setResult] = useState<Result | null>(null);
 
+  const submitAssessment = async (followups?: { question: string; answer: string }[]) => {
+    const { data, error } = await supabase.functions.invoke("assess", {
+      body: { category, symptoms, ...(followups ? { followups } : {}) },
+    });
+    if (error) throw error;
+
+    let assessment: Assessment | null = null;
+    if (data?.assessment && typeof data.assessment === "object") {
+      assessment = data.assessment as Assessment;
+    } else if (typeof data === "string") {
+      assessment = JSON.parse(stripFences(data));
+    }
+    if (!assessment) throw new Error("Empty AI response");
+
+    const code = generateCode();
+    const { data: userData } = await supabase.auth.getUser();
+    if (!userData.user) throw new Error("Not signed in");
+
+    const { error: insErr } = await supabase.from("assessments").insert({
+      assessment_code: code,
+      user_id: userData.user.id,
+      category,
+      symptoms,
+      ai_response: JSON.stringify(assessment),
+      risk_level: assessment.risk_level,
+    });
+    if (insErr) throw insErr;
+
+    return { code, assessment };
+  };
+
   const handleSubmit = async () => {
     if (!symptoms.trim()) {
       toast.error("Please describe the symptoms.");
@@ -57,36 +88,22 @@ function AssessmentPage() {
     }
     setSubmitting(true);
     try {
-      const { data, error } = await supabase.functions.invoke("assess", {
-        body: { category, symptoms },
-      });
-      if (error) throw error;
-
-      let assessment: Assessment | null = null;
-      if (data?.assessment && typeof data.assessment === "object") {
-        assessment = data.assessment as Assessment;
-      } else if (typeof data === "string") {
-        assessment = JSON.parse(stripFences(data));
-      }
-      if (!assessment) throw new Error("Empty AI response");
-
-      const code = generateCode();
-      const { data: userData } = await supabase.auth.getUser();
-      if (!userData.user) throw new Error("Not signed in");
-
-      const { error: insErr } = await supabase.from("assessments").insert({
-        assessment_code: code,
-        user_id: userData.user.id,
-        category,
-        symptoms,
-        ai_response: JSON.stringify(assessment),
-        risk_level: assessment.risk_level,
-      });
-      if (insErr) throw insErr;
-
-      setResult({ code, assessment });
+      setResult(await submitAssessment());
     } catch (err) {
       toast.error(err instanceof Error ? err.message : "Failed to submit");
+    } finally {
+      setSubmitting(false);
+    }
+  };
+
+  const handleRefine = async (followups: { question: string; answer: string }[]) => {
+    setSubmitting(true);
+    try {
+      const next = await submitAssessment(followups);
+      setResult(next);
+      toast.success("Assessment updated");
+    } catch (err) {
+      toast.error(err instanceof Error ? err.message : "Failed to update");
     } finally {
       setSubmitting(false);
     }
