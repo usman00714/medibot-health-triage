@@ -75,14 +75,8 @@ Deno.serve(async (req) => {
     }
 
 
-    if (!geminiRes.ok) {
-      const errText = await geminiRes.text();
-      console.error("Gemini error:", geminiRes.status, errText);
-      return new Response(JSON.stringify({ error: "Gemini request failed", detail: errText }), {
-        status: 502,
-        headers: { ...corsHeaders, "Content-Type": "application/json" },
-      });
-    }
+
+
 
     const data = await geminiRes.json();
     const raw: string = data?.candidates?.[0]?.content?.parts?.[0]?.text ?? "";
