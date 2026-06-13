@@ -1,5 +1,5 @@
 // Edge function: assess
-// Calls Google Gemini (gemini-1.5-flash) with a strict triage system prompt.
+// Calls Google Gemini (gemini-2.5-flash) with a strict triage system prompt.
 // GEMINI_API_KEY is read from Supabase secrets and never leaves the server.
 
 const corsHeaders = {
@@ -42,7 +42,7 @@ Deno.serve(async (req) => {
     const userPrompt = `Patient category: ${category}\nSymptoms: ${symptoms}`;
 
     const geminiRes = await fetch(
-      `https://generativelanguage.googleapis.com/v1beta/models/gemini-2.0-flash:generateContent?key=${apiKey}`,
+      `https://generativelanguage.googleapis.com/v1beta/models/gemini-2.5-flash:generateContent?key=${apiKey}`,
       {
         method: "POST",
         headers: { "Content-Type": "application/json" },
